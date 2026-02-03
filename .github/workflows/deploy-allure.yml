@@ -1,0 +1,43 @@
+name: Deploy Allure Report
+
+on:
+  push:
+    branches:
+      - main  # run this workflow whenever you push to main
+  workflow_dispatch: # also allows manual trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout the repo
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # 2️⃣ Set up Node (needed for Playwright)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # 4️⃣ Run tests and generate Allure results
+      - name: Run Playwright tests
+        run: npx playwright test
+
+      # 5️⃣ Generate Allure report in /docs
+      - name: Generate Allure Report
+        run: |
+          npm install -g allure-commandline
+          allure generate allure-results --clean -o docs
+
+      # 6️⃣ Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
